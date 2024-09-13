@@ -196,16 +196,53 @@ export const INDEX_MAPPING = {
       },
     },
   },
-  meta: {
+  changes: {
     properties: {
-      key: {
+      model: {
         type: "keyword",
       },
-      value: {
+      operation: {
+        type: "keyword",
+      },
+      id: {
+        type: "keyword",
+      },
+      path: {
         type: "text",
         fields: {
           keyword: {
             type: "keyword",
+          },
+        },
+      },
+      before: {
+        type: "text",
+        fields: {
+          keyword: {
+            type: "keyword",
+          },
+        },
+      },
+      after: {
+        type: "text",
+        fields: {
+          keyword: {
+            type: "keyword",
+          },
+        },
+      },
+      meta: {
+        properties: {
+          key: {
+            type: "keyword",
+          },
+          value: {
+            type: "text",
+            fields: {
+              keyword: {
+                type: "keyword",
+              },
+            },
           },
         },
       },
@@ -244,6 +281,21 @@ export const INDEX_MAPPING = {
                 type: "keyword",
               },
             },
+          },
+        },
+      },
+    },
+  },
+  meta: {
+    properties: {
+      key: {
+        type: "keyword",
+      },
+      value: {
+        type: "text",
+        fields: {
+          keyword: {
+            type: "keyword",
           },
         },
       },
