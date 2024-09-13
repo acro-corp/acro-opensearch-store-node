@@ -156,6 +156,31 @@ class OpenSearchEngine extends Engine<OpenSearchAction> {
         }
       : undefined;
 
+    const changes =
+      action.changes?.map((change) => {
+        return {
+          ...change,
+          before: change.before
+            ? typeof change.before === "string"
+              ? change.before
+              : JSON.stringify(breakCircularReferences(change.before))
+            : undefined,
+          after: change.after
+            ? typeof change.after === "string"
+              ? change.after
+              : JSON.stringify(breakCircularReferences(change.after))
+            : undefined,
+          meta: transformObjectToArray(change.meta),
+        };
+      }) || undefined;
+
+    const cost = action.cost
+      ? {
+          ...action.cost,
+          meta: transformObjectToArray(action.cost?.meta),
+        }
+      : undefined;
+
     const meta = transformObjectToArray(action.meta);
 
     return {
@@ -164,6 +189,8 @@ class OpenSearchEngine extends Engine<OpenSearchAction> {
       targets,
       request,
       response,
+      changes,
+      cost,
       meta,
     };
   }
