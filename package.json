@@ -1,0 +1,34 @@
+{
+  "name": "@acro-sdk/opensearch-store",
+  "version": "0.0.8",
+  "description": "",
+  "main": "dist/cjs/index.js",
+  "module": "dist/esm/index.mjs",
+  "types": "dist/types/index.d.ts",
+  "scripts": {
+    "prepublish": "npm run build",
+    "build": "npm run build:cjs && npm run build:esm",
+    "build:cjs": "tsc -p tsconfig.cjs.json",
+    "build:esm": "tsc -p tsconfig.esm.json && npm run rename:esm",
+    "rename:esm": "/bin/zsh ../../scripts/fix-mjs.sh",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "LGPL-3.0-or-later",
+  "devDependencies": {
+    "@types/luxon": "^3.4.2",
+    "@types/node": "^22.5.4",
+    "@types/uuid": "^10.0.0",
+    "esbuild": "^0.23.1",
+    "esbuild-plugin-tsc": "^0.4.0",
+    "typescript": "^5.5.4"
+  },
+  "dependencies": {
+    "@acro-sdk/common-store": "0.0.3",
+    "@opensearch-project/opensearch": "^2.12.0",
+    "luxon": "^3.5.0",
+    "uuid": "^10.0.0",
+    "zod": "^3.23.8"
+  }
+}
