@@ -20,7 +20,7 @@ import {
   breakCircularReferences,
   deepCompareObjects,
   removeSensitiveKeys,
-} from "../packages/opensearch/src/utils";
+} from "../src/utils";
 
 describe("removeSensitiveKeys()", () => {
   test("works with number primitive", () => {
