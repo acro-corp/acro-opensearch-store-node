@@ -101,6 +101,49 @@ const OpenSearchActionSchema = z.object({
         .optional(),
     })
     .optional(),
+  changes: z
+    .array(
+      z.object({
+        model: z.string(),
+        operation: z.string(), // create, update, delete, read
+        id: z.string().optional(),
+        path: z.string().optional(),
+        before: z.string().optional(),
+        after: z.string().optional(),
+        meta: z
+          .array(
+            z.object({
+              key: z.string(),
+              value: z.string(),
+            })
+          )
+          .optional(),
+      })
+    )
+    .optional(),
+  cost: z
+    .object({
+      amount: z.number(),
+      currency: z.string(),
+      components: z
+        .array(
+          z.object({
+            type: z.string().optional(),
+            key: z.string(),
+            amount: z.number(),
+          })
+        )
+        .optional(),
+      meta: z
+        .array(
+          z.object({
+            key: z.string(),
+            value: z.string(),
+          })
+        )
+        .optional(),
+    })
+    .optional(),
   meta: z
     .array(
       z.object({

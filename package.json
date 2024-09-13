@@ -1,6 +1,6 @@
 {
   "name": "@acro-sdk/opensearch-store",
-  "version": "0.0.8",
+  "version": "0.0.0",
   "description": "",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.mjs",
@@ -26,7 +26,7 @@
     "vitest": "^2.0.5"
   },
   "dependencies": {
-    "@acro-sdk/common-store": "^0.1.0",
+    "@acro-sdk/common-store": "^0.2.0",
     "@opensearch-project/opensearch": "^2.12.0",
     "luxon": "^3.5.0",
     "uuid": "^10.0.0",
