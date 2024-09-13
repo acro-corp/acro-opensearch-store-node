@@ -235,6 +235,18 @@ class OpenSearchEngine extends Engine<OpenSearchAction> {
         }
       : undefined;
 
+    const cost = action.cost
+      ? {
+          ...action.cost,
+          meta: transformArrayToObject(action.cost?.meta),
+        }
+      : undefined;
+
+    const changes = action.changes?.map((change) => ({
+      ...change,
+      meta: transformArrayToObject(change.meta),
+    }));
+
     const meta = transformArrayToObject(action.meta);
 
     return {
@@ -243,6 +255,8 @@ class OpenSearchEngine extends Engine<OpenSearchAction> {
       targets,
       request,
       response,
+      cost,
+      changes,
       meta,
     };
   }
