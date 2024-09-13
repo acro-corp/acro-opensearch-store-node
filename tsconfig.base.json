@@ -11,5 +11,9 @@
     "skipLibCheck": true,
     "moduleResolution": "node",
     "noImplicitThis": false
-  }
+  },
+  "exclude": [
+    "test/**/*.spec.ts",
+    "dist/**/*"
+  ]
 }

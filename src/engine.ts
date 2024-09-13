@@ -26,12 +26,11 @@ import {
 import { Client, ClientOptions } from "@opensearch-project/opensearch";
 
 import { OpenSearchAction, OpenSearchActionSchema } from "./action";
+import { transformArrayToObject, transformObjectToArray } from "./utils";
 import {
   breakCircularReferences,
   deepCompareObjects,
-  transformArrayToObject,
-  transformObjectToArray,
-} from "./utils";
+} from "@acro-sdk/common-store";
 import { INDEX_MAPPING } from "./mapping";
 import { v4 } from "uuid";
 
