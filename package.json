@@ -11,7 +11,7 @@
     "build:cjs": "tsc -p tsconfig.cjs.json",
     "build:esm": "tsc -p tsconfig.esm.json",
     "rename:esm": "/bin/zsh ./scripts/fix-mjs.sh",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "vitest"
   },
   "keywords": [],
   "author": "",
@@ -26,7 +26,7 @@
     "vitest": "^2.0.5"
   },
   "dependencies": {
-    "@acro-sdk/common-store": "0.0.3",
+    "@acro-sdk/common-store": "^0.1.0",
     "@opensearch-project/opensearch": "^2.12.0",
     "luxon": "^3.5.0",
     "uuid": "^10.0.0",
