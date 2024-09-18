@@ -711,7 +711,7 @@ class OpenSearchEngine extends Engine<OpenSearchAction> {
    * @returns
    */
   buildFindManyQuery(
-    options: FindActionOptions,
+    _options: FindActionOptions,
     filters: FindActionFilters
   ): any[] {
     // instantiate companyId and date range filters
@@ -742,7 +742,188 @@ class OpenSearchEngine extends Engine<OpenSearchAction> {
       },
     ];
 
-    // add other filters
+    // add query filter
+    // it will search:
+    //  - id
+    //  - app
+    //  - environment
+    //  - framework.name
+    //  - sessionId
+    //  - traceIds
+    //  - action.id
+    //  - action.object
+    //  - agents.id
+    //  - agents.meta.value
+    //  - targets.id
+    //  - targets.meta.value
+    //  - request.value
+    //  - response.body.value
+    //  - response.headers.value
+    //  - changes.id
+    //  - changes.path
+    //  - meta.value
+    if (filters.query) {
+      must.push({
+        bool: {
+          should: [
+            {
+              term: {
+                id: filters.query,
+              },
+            },
+            {
+              term: {
+                app: filters.query,
+              },
+            },
+            {
+              term: {
+                environment: filters.query,
+              },
+            },
+            {
+              term: {
+                "framework.name": filters.query,
+              },
+            },
+            {
+              term: {
+                sessionId: filters.query,
+              },
+            },
+            {
+              term: {
+                traceIds: filters.query,
+              },
+            },
+            {
+              term: {
+                "action.id": filters.query,
+              },
+            },
+            {
+              term: {
+                "action.object.keyword": filters.query,
+              },
+            },
+            {
+              nested: {
+                path: "agents",
+                query: {
+                  bool: {
+                    should: [
+                      {
+                        term: {
+                          "agents.id": filters.query,
+                        },
+                      },
+                      {
+                        nested: {
+                          path: "agents.meta",
+                          query: {
+                            term: {
+                              "agents.meta.value.keyword": filters.query,
+                            },
+                          },
+                        },
+                      },
+                    ],
+                  },
+                },
+              },
+            },
+            {
+              nested: {
+                path: "targets",
+                query: {
+                  bool: {
+                    should: [
+                      {
+                        term: {
+                          "targets.id": filters.query,
+                        },
+                      },
+                      {
+                        nested: {
+                          path: "targets.meta",
+                          query: {
+                            term: {
+                              "targets.meta.value.keyword": filters.query,
+                            },
+                          },
+                        },
+                      },
+                    ],
+                  },
+                },
+              },
+            },
+            {
+              nested: {
+                path: "request",
+                query: {
+                  term: {
+                    "request.value.keyword": filters.query,
+                  },
+                },
+              },
+            },
+            {
+              nested: {
+                path: "response.body",
+                query: {
+                  term: {
+                    "response.body.value.keyword": filters.query,
+                  },
+                },
+              },
+            },
+            {
+              nested: {
+                path: "response.headers",
+                query: {
+                  term: {
+                    "response.headers.value.keyword": filters.query,
+                  },
+                },
+              },
+            },
+            {
+              nested: {
+                path: "changes",
+                query: {
+                  term: {
+                    "changes.id": filters.query,
+                  },
+                },
+              },
+            },
+            {
+              nested: {
+                path: "changes",
+                query: {
+                  term: {
+                    "changes.path.keyword": filters.query,
+                  },
+                },
+              },
+            },
+            {
+              nested: {
+                path: "meta",
+                query: {
+                  term: {
+                    "meta.value.keyword": filters.query,
+                  },
+                },
+              },
+            },
+          ],
+        },
+      });
+    }
+
+    // add other simple filters
     ["id", "clientId", "app", "environment", "sessionId", "traceIds"].forEach(
       (key) => {
         if (filters[key as keyof typeof filters]) {

@@ -52,13 +52,285 @@ describe("OpenSearchEngine.findMany", () => {
     const results = await engine.findMany(
       {},
       {
-        companyId: "123",
+        companyId: "company123",
         start: "2021-07-01T00:00:00.000Z",
         end: "2021-08-31T23:59:59.999Z",
       }
     );
 
     expect(results).toEqual([]);
+  });
+
+  it("should perform query with query string matching app", async () => {
+    const results = await engine.findMany(
+      {},
+      {
+        companyId: "company123",
+        query: "testApp",
+      }
+    );
+
+    expect(results[0]).toEqual({
+      id: results[0]?.id,
+      timestamp: results[0]?.timestamp,
+      ...OPENSEARCH_ACTION_TEMPLATE,
+    });
+  });
+
+  it("should perform query with query string matching environment", async () => {
+    const results = await engine.findMany(
+      {},
+      {
+        companyId: "company123",
+        query: "production",
+      }
+    );
+
+    expect(results[0]).toEqual({
+      id: results[0]?.id,
+      timestamp: results[0]?.timestamp,
+      ...OPENSEARCH_ACTION_TEMPLATE,
+    });
+  });
+
+  it("should perform query with query string matching framework name", async () => {
+    const results = await engine.findMany(
+      {},
+      {
+        companyId: "company123",
+        query: "elastic",
+      }
+    );
+
+    expect(results[0]).toEqual({
+      id: results[0]?.id,
+      timestamp: results[0]?.timestamp,
+      ...OPENSEARCH_ACTION_TEMPLATE,
+    });
+  });
+
+  it("should perform query with query string matching sessionId", async () => {
+    const results = await engine.findMany(
+      {},
+      {
+        companyId: "company123",
+        query: "session789",
+      }
+    );
+
+    expect(results[0]).toEqual({
+      id: results[0]?.id,
+      timestamp: results[0]?.timestamp,
+      ...OPENSEARCH_ACTION_TEMPLATE,
+    });
+  });
+
+  it("should perform query with query string matching traceIds", async () => {
+    const results = await engine.findMany(
+      {},
+      {
+        companyId: "company123",
+        query: "trace2",
+      }
+    );
+
+    expect(results[0]).toEqual({
+      id: results[0]?.id,
+      timestamp: results[0]?.timestamp,
+      ...OPENSEARCH_ACTION_TEMPLATE,
+    });
+  });
+
+  it("should perform query with query string matching action ID", async () => {
+    const results = await engine.findMany(
+      {},
+      {
+        companyId: "company123",
+        query: "action123",
+      }
+    );
+
+    expect(results[0]).toEqual({
+      id: results[0]?.id,
+      timestamp: results[0]?.timestamp,
+      ...OPENSEARCH_ACTION_TEMPLATE,
+    });
+  });
+
+  it("should perform query with query string matching action object", async () => {
+    const results = await engine.findMany(
+      {},
+      {
+        companyId: "company123",
+        query: "BUTTON",
+      }
+    );
+
+    expect(results[0]).toEqual({
+      id: results[0]?.id,
+      timestamp: results[0]?.timestamp,
+      ...OPENSEARCH_ACTION_TEMPLATE,
+    });
+  });
+
+  it("should perform query with query string matching agent ID", async () => {
+    const results = await engine.findMany(
+      {},
+      {
+        companyId: "company123",
+        query: "agent1",
+      }
+    );
+
+    expect(results[0]).toEqual({
+      id: results[0]?.id,
+      timestamp: results[0]?.timestamp,
+      ...OPENSEARCH_ACTION_TEMPLATE,
+    });
+  });
+
+  it("should perform query with query string matching agent meta", async () => {
+    const results = await engine.findMany(
+      {},
+      {
+        companyId: "company123",
+        query: "30",
+      }
+    );
+
+    expect(results[0]).toEqual({
+      id: results[0]?.id,
+      timestamp: results[0]?.timestamp,
+      ...OPENSEARCH_ACTION_TEMPLATE,
+    });
+  });
+
+  it("should perform query with query string matching target ID", async () => {
+    const results = await engine.findMany(
+      {},
+      {
+        companyId: "company123",
+        query: "target1",
+      }
+    );
+
+    expect(results[0]).toEqual({
+      id: results[0]?.id,
+      timestamp: results[0]?.timestamp,
+      ...OPENSEARCH_ACTION_TEMPLATE,
+    });
+  });
+
+  it("should perform query with query string matching target meta", async () => {
+    const results = await engine.findMany(
+      {},
+      {
+        companyId: "company123",
+        query: "header",
+      }
+    );
+
+    expect(results[0]).toEqual({
+      id: results[0]?.id,
+      timestamp: results[0]?.timestamp,
+      ...OPENSEARCH_ACTION_TEMPLATE,
+    });
+  });
+
+  it("should perform query with query string matching request", async () => {
+    const results = await engine.findMany(
+      {},
+      {
+        companyId: "company123",
+        query: "transaction_123",
+      }
+    );
+
+    expect(results[0]).toEqual({
+      id: results[0]?.id,
+      timestamp: results[0]?.timestamp,
+      ...OPENSEARCH_ACTION_TEMPLATE,
+    });
+  });
+
+  it("should perform query with query string matching response body", async () => {
+    const results = await engine.findMany(
+      {},
+      {
+        companyId: "company123",
+        query: "success",
+      }
+    );
+
+    expect(results[0]).toEqual({
+      id: results[0]?.id,
+      timestamp: results[0]?.timestamp,
+      ...OPENSEARCH_ACTION_TEMPLATE,
+    });
+  });
+
+  it("should perform query with query string matching response headers", async () => {
+    const results = await engine.findMany(
+      {},
+      {
+        companyId: "company123",
+        query: "application/json",
+      }
+    );
+
+    expect(results[0]).toEqual({
+      id: results[0]?.id,
+      timestamp: results[0]?.timestamp,
+      ...OPENSEARCH_ACTION_TEMPLATE,
+    });
+  });
+
+  it("should perform query with query string matching changes ID", async () => {
+    const results = await engine.findMany(
+      {},
+      {
+        companyId: "company123",
+        query: "model_123",
+      }
+    );
+
+    expect(results[0]).toEqual({
+      id: results[0]?.id,
+      timestamp: results[0]?.timestamp,
+      ...OPENSEARCH_ACTION_TEMPLATE,
+    });
+  });
+
+  it("should perform query with query string matching changes path", async () => {
+    const results = await engine.findMany(
+      {},
+      {
+        companyId: "company123",
+        query: "/status",
+      }
+    );
+
+    expect(results[0]).toEqual({
+      id: results[0]?.id,
+      timestamp: results[0]?.timestamp,
+      ...OPENSEARCH_ACTION_TEMPLATE,
+    });
+  });
+
+  it("should perform query with query string matching meta", async () => {
+    const results = await engine.findMany(
+      {},
+      {
+        companyId: "company123",
+        query: "user-interaction",
+      }
+    );
+
+    expect(results[0]).toEqual({
+      id: results[0]?.id,
+      timestamp: results[0]?.timestamp,
+      ...OPENSEARCH_ACTION_TEMPLATE,
+    });
   });
 
   it("should perform query with clientId, app, environment, sessionId, traceIds", async () => {
