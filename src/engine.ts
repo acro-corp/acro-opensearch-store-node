@@ -822,7 +822,8 @@ class OpenSearchEngine extends Engine<OpenSearchAction> {
           if (action?.[key as keyof typeof action]) {
             actionMust.push({
               term: {
-                [`action.${key}`]: action?.[key as keyof typeof action],
+                [`action.${key === "object" ? "object.keyword" : key}`]:
+                  action?.[key as keyof typeof action],
               },
             });
           }
@@ -881,14 +882,29 @@ class OpenSearchEngine extends Engine<OpenSearchAction> {
           Object.keys(agent.meta).forEach((key) => {
             agentMetaMust.push({
               term: {
-                [`agents.meta.${key}`]:
+                "agents.meta.key": key,
+              },
+            });
+            agentMetaMust.push({
+              term: {
+                "agents.meta.value.keyword":
                   agent.meta?.[key as keyof typeof agent.meta],
               },
             });
           });
-          agentMetaMust.forEach((v: any) => {
-            agentMust.push(v);
-          });
+          if (agentMetaMust.length) {
+            agentMust.push({
+              nested: {
+                path: "agents.meta",
+                query:
+                  agentMetaMust.length === 1
+                    ? agentMetaMust[0]
+                    : {
+                        bool: { must: agentMetaMust },
+                      },
+              },
+            });
+          }
         }
 
         if (agentMust.length === 1) {
@@ -902,12 +918,18 @@ class OpenSearchEngine extends Engine<OpenSearchAction> {
         }
       });
 
-      if (agentShould.length === 1) {
-        must.push(agentShould[0]);
-      } else if (agentShould.length) {
+      if (agentShould.length) {
         must.push({
-          bool: {
-            should: agentShould,
+          nested: {
+            path: "agents",
+            query:
+              agentShould.length === 1
+                ? agentShould[0]
+                : {
+                    bool: {
+                      should: agentShould,
+                    },
+                  },
           },
         });
       }
@@ -945,14 +967,29 @@ class OpenSearchEngine extends Engine<OpenSearchAction> {
           Object.keys(target.meta).forEach((key) => {
             targetMetaMust.push({
               term: {
-                [`targets.meta.${key}`]:
+                "targets.meta.key": key,
+              },
+            });
+            targetMetaMust.push({
+              term: {
+                "targets.meta.value.keyword":
                   target.meta?.[key as keyof typeof target.meta],
               },
             });
           });
-          targetMetaMust.forEach((v: any) => {
-            targetMust.push(v);
-          });
+          if (targetMetaMust.length) {
+            targetMust.push({
+              nested: {
+                path: "targets.meta",
+                query:
+                  targetMetaMust.length === 1
+                    ? targetMetaMust[0]
+                    : {
+                        bool: { must: targetMetaMust },
+                      },
+              },
+            });
+          }
         }
 
         if (targetMust.length === 1) {
@@ -966,12 +1003,18 @@ class OpenSearchEngine extends Engine<OpenSearchAction> {
         }
       });
 
-      if (targetShould.length === 1) {
-        must.push(targetShould[0]);
-      } else if (targetShould.length) {
+      if (targetShould.length) {
         must.push({
-          bool: {
-            should: targetShould,
+          nested: {
+            path: "targets",
+            query:
+              targetShould.length === 1
+                ? targetShould[0]
+                : {
+                    bool: {
+                      should: targetShould,
+                    },
+                  },
           },
         });
       }
