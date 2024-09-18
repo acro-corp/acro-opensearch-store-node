@@ -182,4 +182,295 @@ describe("OpenSearchEngine.findMany", () => {
       ...OPENSEARCH_ACTION_TEMPLATE,
     });
   });
+
+  it("should perform query with with specific key in request", async () => {
+    const results = await engine.findMany(
+      {},
+      {
+        companyId: "company123",
+        request: { body: { transactionId: "transaction_123" } },
+      }
+    );
+
+    expect(results[0]).toEqual({
+      id: results[0]?.id,
+      timestamp: results[0]?.timestamp,
+      ...OPENSEARCH_ACTION_TEMPLATE,
+    });
+  });
+
+  it("should perform query with with generic (any child) key in request", async () => {
+    const results = await engine.findMany(
+      {},
+      {
+        companyId: "company123",
+        request: { transactionId: "transaction_123" },
+      }
+    );
+
+    expect(results[0]).toEqual({
+      id: results[0]?.id,
+      timestamp: results[0]?.timestamp,
+      ...OPENSEARCH_ACTION_TEMPLATE,
+    });
+  });
+
+  it("should perform query with multiple specific keys in request", async () => {
+    const results = await engine.findMany(
+      {},
+      {
+        companyId: "company123",
+        request: {
+          params: { storeId: "store_123", transactionId: "transaction_123" },
+        },
+      }
+    );
+
+    expect(results[0]).toEqual({
+      id: results[0]?.id,
+      timestamp: results[0]?.timestamp,
+      ...OPENSEARCH_ACTION_TEMPLATE,
+    });
+  });
+
+  it("should perform query with multiple specific keys in request (no match)", async () => {
+    const results = await engine.findMany(
+      {},
+      {
+        companyId: "company123",
+        request: {
+          body: { storeId: "store_123", transactionId: "transaction_123" },
+        },
+      }
+    );
+
+    expect(results).toEqual([]);
+  });
+
+  it("should perform query with multiple generic keys in request", async () => {
+    const results = await engine.findMany(
+      {},
+      {
+        companyId: "company123",
+        request: {
+          storeId: "store_123",
+          transactionId: "transaction_123",
+        },
+      }
+    );
+
+    expect(results[0]).toEqual({
+      id: results[0]?.id,
+      timestamp: results[0]?.timestamp,
+      ...OPENSEARCH_ACTION_TEMPLATE,
+    });
+  });
+
+  it("should perform query with multiple generic keys in request (match across multiple children)", async () => {
+    const results = await engine.findMany(
+      {},
+      {
+        companyId: "company123",
+        request: {
+          storeId: "store_123",
+          transactionId: "transaction_123",
+        },
+      }
+    );
+
+    expect(results[0]).toEqual({
+      id: results[0]?.id,
+      timestamp: results[0]?.timestamp,
+      ...OPENSEARCH_ACTION_TEMPLATE,
+    });
+  });
+
+  it("should perform query with multiple generic keys in request (no match)", async () => {
+    const results = await engine.findMany(
+      {},
+      {
+        companyId: "company123",
+        request: {
+          body: { storeId: "store_456", transactionId: "transaction_123" },
+        },
+      }
+    );
+
+    expect(results).toEqual([]);
+  });
+
+  it("should perform query with array of specific keys in request", async () => {
+    const results = await engine.findMany(
+      {},
+      {
+        companyId: "company123",
+        request: [
+          { body: { transactionId: "transaction_123" } },
+          { body: { storeId: "store_123" } },
+        ],
+      }
+    );
+
+    expect(results[0]).toEqual({
+      id: results[0]?.id,
+      timestamp: results[0]?.timestamp,
+      ...OPENSEARCH_ACTION_TEMPLATE,
+    });
+  });
+
+  it("should perform query with array of specific keys in request", async () => {
+    const results = await engine.findMany(
+      {},
+      {
+        companyId: "company123",
+        request: [
+          { transactionId: "transaction_123" },
+          { storeId: "store_123" },
+        ],
+      }
+    );
+
+    expect(results[0]).toEqual({
+      id: results[0]?.id,
+      timestamp: results[0]?.timestamp,
+      ...OPENSEARCH_ACTION_TEMPLATE,
+    });
+  });
+
+  it("should perform query with response filter", async () => {
+    const results = await engine.findMany(
+      {},
+      {
+        companyId: "company123",
+        response: { status: "200" },
+      }
+    );
+
+    expect(results[0]).toEqual({
+      id: results[0]?.id,
+      timestamp: results[0]?.timestamp,
+      ...OPENSEARCH_ACTION_TEMPLATE,
+    });
+  });
+
+  it("should perform query with response body filter", async () => {
+    const results = await engine.findMany(
+      {},
+      {
+        companyId: "company123",
+        response: { status: "200", body: { result: "success" } },
+      }
+    );
+
+    expect(results[0]).toEqual({
+      id: results[0]?.id,
+      timestamp: results[0]?.timestamp,
+      ...OPENSEARCH_ACTION_TEMPLATE,
+    });
+  });
+
+  it("should perform query with response headers filter", async () => {
+    const results = await engine.findMany(
+      {},
+      {
+        companyId: "company123",
+        response: {
+          status: "200",
+          headers: { "Content-Type": "application/json" },
+        },
+      }
+    );
+
+    expect(results[0]).toEqual({
+      id: results[0]?.id,
+      timestamp: results[0]?.timestamp,
+      ...OPENSEARCH_ACTION_TEMPLATE,
+    });
+  });
+
+  it("should perform query with array of response body filters", async () => {
+    const results = await engine.findMany(
+      {},
+      {
+        companyId: "company123",
+        response: {
+          status: "200",
+          body: [{ result: "success" }, { result: "error" }],
+        },
+      }
+    );
+
+    expect(results[0]).toEqual({
+      id: results[0]?.id,
+      timestamp: results[0]?.timestamp,
+      ...OPENSEARCH_ACTION_TEMPLATE,
+    });
+  });
+
+  it("should perform query with meta filter", async () => {
+    const results = await engine.findMany(
+      {},
+      {
+        companyId: "company123",
+        meta: { importance: "high" },
+      }
+    );
+
+    expect(results[0]).toEqual({
+      id: results[0]?.id,
+      timestamp: results[0]?.timestamp,
+      ...OPENSEARCH_ACTION_TEMPLATE,
+    });
+  });
+
+  it("should perform query with multiple meta filters", async () => {
+    const results = await engine.findMany(
+      {},
+      {
+        companyId: "company123",
+        meta: { importance: "high", category: "user-interaction" },
+      }
+    );
+
+    expect(results[0]).toEqual({
+      id: results[0]?.id,
+      timestamp: results[0]?.timestamp,
+      ...OPENSEARCH_ACTION_TEMPLATE,
+    });
+  });
+
+  it("should perform query with array of meta filters", async () => {
+    const results = await engine.findMany(
+      {},
+      {
+        companyId: "company123",
+        meta: [{ importance: "high" }, { importance: "low" }],
+      }
+    );
+
+    expect(results[0]).toEqual({
+      id: results[0]?.id,
+      timestamp: results[0]?.timestamp,
+      ...OPENSEARCH_ACTION_TEMPLATE,
+    });
+  });
+
+  it("should perform query with array of multiple meta filters", async () => {
+    const results = await engine.findMany(
+      {},
+      {
+        companyId: "company123",
+        meta: [
+          { importance: "high", category: "user-interaction" },
+          { importance: "low" },
+        ],
+      }
+    );
+
+    expect(results[0]).toEqual({
+      id: results[0]?.id,
+      timestamp: results[0]?.timestamp,
+      ...OPENSEARCH_ACTION_TEMPLATE,
+    });
+  });
 });

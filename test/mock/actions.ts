@@ -40,7 +40,8 @@ const ACTION_TEMPLATE = {
   request: {
     url: "/api/submit",
     method: "POST",
-    body: { data: "test" },
+    body: { data: "test", transactionId: "transaction_123" },
+    params: { storeId: "store_123", transactionId: "transaction_123" },
   },
   response: {
     status: "200",
@@ -104,6 +105,9 @@ const OPENSEARCH_ACTION_TEMPLATE = {
     { key: "url", value: "/api/submit" },
     { key: "method", value: "POST" },
     { key: "data", parent: "body", value: "test" },
+    { key: "transactionId", parent: "body", value: "transaction_123" },
+    { key: "storeId", parent: "params", value: "store_123" },
+    { key: "transactionId", parent: "params", value: "transaction_123" },
   ],
   response: {
     ...ACTION_TEMPLATE.response,
