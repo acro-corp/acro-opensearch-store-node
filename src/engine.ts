@@ -822,7 +822,8 @@ class OpenSearchEngine extends Engine<OpenSearchAction> {
           if (action?.[key as keyof typeof action]) {
             actionMust.push({
               term: {
-                [`action.${key}`]: action?.[key as keyof typeof action],
+                [`action.${key === "object" ? "object.keyword" : key}`]:
+                  action?.[key as keyof typeof action],
               },
             });
           }
@@ -881,14 +882,29 @@ class OpenSearchEngine extends Engine<OpenSearchAction> {
           Object.keys(agent.meta).forEach((key) => {
             agentMetaMust.push({
               term: {
-                [`agents.meta.${key}`]:
+                "agents.meta.key": key,
+              },
+            });
+            agentMetaMust.push({
+              term: {
+                "agents.meta.value.keyword":
                   agent.meta?.[key as keyof typeof agent.meta],
               },
             });
           });
-          agentMetaMust.forEach((v: any) => {
-            agentMust.push(v);
-          });
+          if (agentMetaMust.length) {
+            agentMust.push({
+              nested: {
+                path: "agents.meta",
+                query:
+                  agentMetaMust.length === 1
+                    ? agentMetaMust[0]
+                    : {
+                        bool: { must: agentMetaMust },
+                      },
+              },
+            });
+          }
         }
 
         if (agentMust.length === 1) {
@@ -902,12 +918,18 @@ class OpenSearchEngine extends Engine<OpenSearchAction> {
         }
       });
 
-      if (agentShould.length === 1) {
-        must.push(agentShould[0]);
-      } else if (agentShould.length) {
+      if (agentShould.length) {
         must.push({
-          bool: {
-            should: agentShould,
+          nested: {
+            path: "agents",
+            query:
+              agentShould.length === 1
+                ? agentShould[0]
+                : {
+                    bool: {
+                      should: agentShould,
+                    },
+                  },
           },
         });
       }
@@ -945,14 +967,29 @@ class OpenSearchEngine extends Engine<OpenSearchAction> {
           Object.keys(target.meta).forEach((key) => {
             targetMetaMust.push({
               term: {
-                [`targets.meta.${key}`]:
+                "targets.meta.key": key,
+              },
+            });
+            targetMetaMust.push({
+              term: {
+                "targets.meta.value.keyword":
                   target.meta?.[key as keyof typeof target.meta],
               },
             });
           });
-          targetMetaMust.forEach((v: any) => {
-            targetMust.push(v);
-          });
+          if (targetMetaMust.length) {
+            targetMust.push({
+              nested: {
+                path: "targets.meta",
+                query:
+                  targetMetaMust.length === 1
+                    ? targetMetaMust[0]
+                    : {
+                        bool: { must: targetMetaMust },
+                      },
+              },
+            });
+          }
         }
 
         if (targetMust.length === 1) {
@@ -966,218 +1003,401 @@ class OpenSearchEngine extends Engine<OpenSearchAction> {
         }
       });
 
-      if (targetShould.length === 1) {
-        must.push(targetShould[0]);
-      } else if (targetShould.length) {
+      if (targetShould.length) {
         must.push({
-          bool: {
-            should: targetShould,
+          nested: {
+            path: "targets",
+            query:
+              targetShould.length === 1
+                ? targetShould[0]
+                : {
+                    bool: {
+                      should: targetShould,
+                    },
+                  },
           },
         });
       }
     }
 
-    // if (filters.request) {
-    //   const requestMust: any = [];
-    //   Object.keys(filters.request).forEach((key) => {
-    //     if (
-    //       filters.request?.[key] &&
-    //       typeof filters.request?.[key] === "object"
-    //     ) {
-    //       // it's a parent
-    //       Object.keys(filters.request?.[key]).forEach((innerKey) => {
-    //         requestMust.push({
-    //           bool: {
-    //             must: [
-    //               {
-    //                 term: { innerKey },
-    //               },
-    //               {
-    //                 parent: { key },
-    //               },
-    //               {
-    //                 terms: {
-    //                   value: Array.isArray(
-    //                     (
-    //                       filters.request?.[
-    //                         key as keyof typeof filters.request
-    //                       ] as any
-    //                     )?.[innerKey]
-    //                   )
-    //                     ? (
-    //                         filters.request?.[
-    //                           key as keyof typeof filters.request
-    //                         ] as any
-    //                       )?.[innerKey]
-    //                     : [
-    //                         (
-    //                           filters.request?.[
-    //                             key as keyof typeof filters.request
-    //                           ] as any
-    //                         )?.[innerKey],
-    //                       ],
-    //                 },
-    //               },
-    //             ],
-    //           },
-    //         });
-    //       });
-    //     } else {
-    //       requestMust.push({
-    //         bool: {
-    //           must: [
-    //             {
-    //               term: { key },
-    //             },
-    //             {
-    //               terms: {
-    //                 value: Array.isArray(
-    //                   filters.request?.[key as keyof typeof filters.request]
-    //                 )
-    //                   ? filters.request?.[key as keyof typeof filters.request]
-    //                   : [
-    //                       filters.request?.[
-    //                         key as keyof typeof filters.request
-    //                       ],
-    //                     ],
-    //               },
-    //             },
-    //           ],
-    //         },
-    //       });
-    //     }
-    //   });
-    //   if (requestMust.length) {
-    //     must.push({
-    //       nested: {
-    //         path: "request",
-    //         query: { bool: { must: requestMust } },
-    //       },
-    //     });
-    //   }
-    // }
+    if (filters.request) {
+      const requests = Array.isArray(filters.request)
+        ? filters.request
+        : [filters.request];
 
-    // if (filters.response) {
-    //   const responseMust: any = [];
-    //   if (filters.response.status) {
-    //     responseMust.push({
-    //       terms: {
-    //         "response.status": Array.isArray(filters.response.status)
-    //           ? filters.response.status
-    //           : [filters.response.status],
-    //       },
-    //     });
-    //   }
-    //   if (filters.response.time?.gte || filters.response.time?.lt) {
-    //     responseMust.push({
-    //       range: {
-    //         "response.time": {
-    //           ...(filters.response.time?.gte
-    //             ? {
-    //                 gte: filters.response.time?.gte,
-    //               }
-    //             : {}),
-    //           ...(filters.response.time?.lt
-    //             ? {
-    //                 lt: filters.response.time?.lt,
-    //               }
-    //             : {}),
-    //         },
-    //       },
-    //     });
-    //   }
-    //   if (filters.response.body) {
-    //     const responseBodyMust: any = [];
-    //     Object.keys(filters.response.body).forEach((key) => {
-    //       responseBodyMust.push({
-    //         terms: {
-    //           [`response.body.${key}`]: Array.isArray(
-    //             filters.response?.body?.[
-    //               key as keyof typeof filters.response.body
-    //             ]
-    //           )
-    //             ? filters.response?.body?.[
-    //                 key as keyof typeof filters.response.body
-    //               ]
-    //             : [
-    //                 filters.response?.body?.[
-    //                   key as keyof typeof filters.response.body
-    //                 ],
-    //               ],
-    //         },
-    //       });
-    //     });
-    //     if (responseBodyMust.length) {
-    //       responseMust.push({
-    //         nested: {
-    //           path: "response.body",
-    //           query: { bool: { must: responseBodyMust } },
-    //         },
-    //       });
-    //     }
-    //   }
-    //   if (filters.response.headers) {
-    //     const responseHeadersMust: any = [];
-    //     Object.keys(filters.response.headers).forEach((key) => {
-    //       responseHeadersMust.push({
-    //         terms: {
-    //           [`response.headers.${key}`]: Array.isArray(
-    //             filters.response?.headers?.[
-    //               key as keyof typeof filters.response.headers
-    //             ]
-    //           )
-    //             ? filters.response?.headers?.[
-    //                 key as keyof typeof filters.response.headers
-    //               ]
-    //             : [
-    //                 filters.response?.headers?.[
-    //                   key as keyof typeof filters.response.headers
-    //                 ],
-    //               ],
-    //         },
-    //       });
-    //     });
-    //     if (responseHeadersMust.length) {
-    //       responseMust.push({
-    //         nested: {
-    //           path: "response.headers",
-    //           query: { bool: { must: responseHeadersMust } },
-    //         },
-    //       });
-    //     }
-    //   }
-    //   if (responseMust.length) {
-    //     must.push({
-    //       nested: {
-    //         path: "response",
-    //         query: { bool: { must: responseMust } },
-    //       },
-    //     });
-    //   }
-    // }
+      const requestShould: any = [];
 
-    // if (filters.meta) {
-    //   const metaMust: any = [];
-    //   Object.keys(filters.meta).forEach((key) => {
-    //     metaMust.push({
-    //       terms: {
-    //         [`meta.${key}`]: Array.isArray(
-    //           filters.meta?.[key as keyof typeof filters.meta]
-    //         )
-    //           ? filters.meta?.[key as keyof typeof filters.meta]
-    //           : [filters.meta?.[key as keyof typeof filters.meta]],
-    //       },
-    //     });
-    //   });
-    //   if (metaMust.length) {
-    //     must.push({
-    //       nested: {
-    //         path: "meta",
-    //         query: { bool: { must: metaMust } },
-    //       },
-    //     });
-    //   }
-    // }
+      // OR all the request queries together
+      requests.forEach((request) => {
+        const requestMust: any = [];
+        Object.keys(request).forEach((key) => {
+          if (request?.[key] && typeof request?.[key] === "object") {
+            // it's a parent
+            Object.keys(request?.[key]).forEach((innerKey) => {
+              requestMust.push({
+                nested: {
+                  path: "request",
+                  query: {
+                    bool: {
+                      must: [
+                        {
+                          term: { "request.key": innerKey },
+                        },
+                        {
+                          term: { "request.parent": key },
+                        },
+                        {
+                          term: {
+                            "request.value.keyword": (
+                              request?.[key as keyof typeof request] as any
+                            )?.[innerKey],
+                          },
+                        },
+                      ],
+                    },
+                  },
+                },
+              });
+            });
+          } else {
+            requestMust.push({
+              nested: {
+                path: "request",
+                query: {
+                  bool: {
+                    must: [
+                      {
+                        term: { "request.key": key },
+                      },
+                      {
+                        term: {
+                          "request.value.keyword":
+                            request?.[key as keyof typeof request],
+                        },
+                      },
+                    ],
+                  },
+                },
+              },
+            });
+          }
+        });
+
+        if (requestMust.length === 1) {
+          requestShould.push(requestMust[0]);
+        } else if (requestMust.length) {
+          requestShould.push({
+            bool: {
+              must: requestMust,
+            },
+          });
+        }
+      });
+
+      if (requestShould.length) {
+        must.push(
+          requestShould.length === 1
+            ? requestShould[0]
+            : {
+                bool: {
+                  should: requestShould,
+                },
+              }
+        );
+      }
+    }
+
+    if (filters.response) {
+      const responseMust: any = [];
+      if (filters.response.status) {
+        responseMust.push(
+          Array.isArray(filters.response.status)
+            ? {
+                terms: {
+                  "response.status": filters.response.status,
+                },
+              }
+            : {
+                term: {
+                  "response.status": filters.response.status,
+                },
+              }
+        );
+      }
+
+      if (filters.response.time?.gte || filters.response.time?.lt) {
+        responseMust.push({
+          range: {
+            "response.time": {
+              ...(filters.response.time?.gte
+                ? {
+                    gte: filters.response.time?.gte,
+                  }
+                : {}),
+              ...(filters.response.time?.lt
+                ? {
+                    lt: filters.response.time?.lt,
+                  }
+                : {}),
+            },
+          },
+        });
+      }
+
+      if (filters.response.body) {
+        const responseBodyShould: any[] = [];
+
+        const responseBody = Array.isArray(filters.response.body)
+          ? filters.response.body
+          : [filters.response.body];
+
+        responseBody.forEach((body) => {
+          const responseBodyMust: any[] = [];
+
+          Object.keys(body).forEach((key) => {
+            responseBodyMust.push({
+              term: {
+                "response.body.key": key,
+              },
+            });
+
+            responseBodyMust.push({
+              term: {
+                "response.body.value.keyword": body[key as keyof typeof body],
+              },
+            });
+          });
+
+          if (responseBodyMust.length) {
+            responseBodyShould.push({
+              nested: {
+                path: "response.body",
+                query:
+                  responseBodyMust.length === 1
+                    ? responseBodyMust[0]
+                    : { bool: { must: responseBodyMust } },
+              },
+            });
+          }
+        });
+
+        if (responseBodyShould.length) {
+          responseMust.push(
+            responseBodyShould.length === 1
+              ? responseBodyShould[0]
+              : {
+                  bool: {
+                    should: responseBodyShould,
+                  },
+                }
+          );
+        }
+      }
+
+      if (filters.response.headers) {
+        const responseHeadersShould: any[] = [];
+
+        const responseHeaders = Array.isArray(filters.response.headers)
+          ? filters.response.headers
+          : [filters.response.headers];
+
+        responseHeaders.forEach((headers) => {
+          const responseHeadersMust: any[] = [];
+
+          Object.keys(headers).forEach((key) => {
+            responseHeadersMust.push({
+              term: {
+                "response.headers.key": key,
+              },
+            });
+
+            responseHeadersMust.push({
+              term: {
+                "response.headers.value.keyword":
+                  headers[key as keyof typeof headers],
+              },
+            });
+          });
+
+          if (responseHeadersMust.length) {
+            responseHeadersShould.push({
+              nested: {
+                path: "response.headers",
+                query:
+                  responseHeadersMust.length === 1
+                    ? responseHeadersMust[0]
+                    : { bool: { must: responseHeadersMust } },
+              },
+            });
+          }
+        });
+
+        if (responseHeadersShould.length) {
+          responseMust.push(
+            responseHeadersShould.length === 1
+              ? responseHeadersShould[0]
+              : {
+                  bool: {
+                    should: responseHeadersShould,
+                  },
+                }
+          );
+        }
+      }
+
+      if (responseMust.length) {
+        must.push(
+          responseMust.length === 1
+            ? responseMust[0]
+            : {
+                bool: { must: responseMust },
+              }
+        );
+      }
+    }
+
+    if (filters.changes) {
+      const changes = Array.isArray(filters.changes)
+        ? filters.changes
+        : [filters.changes];
+
+      const changesShould: any = [];
+
+      // OR all the change queries together
+      changes.forEach((change) => {
+        const changeMust: any = [];
+        ["model", "operation", "id", "path", "before", "after"].forEach(
+          (key) => {
+            if (change?.[key as keyof typeof change]) {
+              changeMust.push({
+                term: {
+                  [`changes.${
+                    ["path", "before", "after"].includes(
+                      key as keyof typeof change
+                    )
+                      ? `${key}.keyword`
+                      : key
+                  }`]: change?.[key as keyof typeof change],
+                },
+              });
+            }
+          }
+        );
+
+        if (change.meta && Object.keys(change.meta).length) {
+          const changeMetaMust: any = [];
+          Object.keys(change.meta).forEach((key) => {
+            changeMetaMust.push({
+              term: {
+                "changes.meta.key": key,
+              },
+            });
+            changeMetaMust.push({
+              term: {
+                "changes.meta.value.keyword":
+                  change.meta?.[key as keyof typeof change.meta],
+              },
+            });
+          });
+          if (changeMetaMust.length) {
+            changeMust.push({
+              nested: {
+                path: "changes.meta",
+                query:
+                  changeMetaMust.length === 1
+                    ? changeMetaMust[0]
+                    : {
+                        bool: { must: changeMetaMust },
+                      },
+              },
+            });
+          }
+        }
+
+        if (changeMust.length === 1) {
+          changesShould.push(changeMust[0]);
+        } else if (changeMust.length) {
+          changesShould.push({
+            bool: {
+              must: changeMust,
+            },
+          });
+        }
+      });
+
+      if (changesShould.length) {
+        must.push({
+          nested: {
+            path: "changes",
+            query:
+              changesShould.length === 1
+                ? changesShould[0]
+                : {
+                    bool: {
+                      should: changesShould,
+                    },
+                  },
+          },
+        });
+      }
+    }
+
+    if (filters.meta) {
+      const metas = Array.isArray(filters.meta) ? filters.meta : [filters.meta];
+
+      const metaShould: any = [];
+
+      // OR all the target queries together
+      metas.forEach((meta) => {
+        const metaMust: any[] = [];
+
+        Object.keys(meta).forEach((key) => {
+          metaMust.push({
+            nested: {
+              path: "meta",
+              query: {
+                bool: {
+                  must: [
+                    {
+                      term: {
+                        "meta.key": key,
+                      },
+                    },
+                    {
+                      term: {
+                        "meta.value.keyword": meta?.[key as keyof typeof meta],
+                      },
+                    },
+                  ],
+                },
+              },
+            },
+          });
+        });
+
+        if (metaMust.length) {
+          metaShould.push(
+            metaMust.length === 1
+              ? metaMust[0]
+              : {
+                  bool: { must: metaMust },
+                }
+          );
+        }
+      });
+
+      if (metaShould.length) {
+        must.push(
+          metaShould.length === 1
+            ? metaShould[0]
+            : {
+                bool: {
+                  should: metaShould,
+                },
+              }
+        );
+      }
+    }
 
     return must;
   }
