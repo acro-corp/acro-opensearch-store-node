@@ -1514,6 +1514,220 @@ describe("OpenSearchEngine.buildFindManyQuery", () => {
     ]);
   });
 
+  it("should correctly create a query with changes", async () => {
+    const query = engine.buildFindManyQuery(
+      {},
+      {
+        companyId: "123",
+        start: "2024-07-01T00:00:00.000Z",
+        end: "2024-08-31T23:59:59.999Z",
+        changes: { model: "model", operation: "update" },
+      }
+    );
+
+    expect(query).toEqual([
+      {
+        term: {
+          companyId: "123",
+        },
+      },
+      {
+        range: {
+          timestamp: {
+            gte: "2024-07-01T00:00:00.000Z",
+            lt: "2024-08-31T23:59:59.999Z",
+          },
+        },
+      },
+      {
+        nested: {
+          path: "changes",
+          query: {
+            bool: {
+              must: [
+                {
+                  term: {
+                    "changes.model": "model",
+                  },
+                },
+                {
+                  term: {
+                    "changes.operation": "update",
+                  },
+                },
+              ],
+            },
+          },
+        },
+      },
+    ]);
+  });
+
+  it("should correctly create a query with changes and meta", async () => {
+    const query = engine.buildFindManyQuery(
+      {},
+      {
+        companyId: "123",
+        start: "2024-07-01T00:00:00.000Z",
+        end: "2024-08-31T23:59:59.999Z",
+        changes: { model: "model", operation: "update", meta: { eye: "ball" } },
+      }
+    );
+
+    expect(query).toEqual([
+      {
+        term: {
+          companyId: "123",
+        },
+      },
+      {
+        range: {
+          timestamp: {
+            gte: "2024-07-01T00:00:00.000Z",
+            lt: "2024-08-31T23:59:59.999Z",
+          },
+        },
+      },
+      {
+        nested: {
+          path: "changes",
+          query: {
+            bool: {
+              must: [
+                {
+                  term: {
+                    "changes.model": "model",
+                  },
+                },
+                {
+                  term: {
+                    "changes.operation": "update",
+                  },
+                },
+                {
+                  nested: {
+                    path: "changes.meta",
+                    query: {
+                      bool: {
+                        must: [
+                          {
+                            term: {
+                              "changes.meta.key": "eye",
+                            },
+                          },
+                          {
+                            term: {
+                              "changes.meta.value.keyword": "ball",
+                            },
+                          },
+                        ],
+                      },
+                    },
+                  },
+                },
+              ],
+            },
+          },
+        },
+      },
+    ]);
+  });
+
+  it("should correctly create a query with changes array", async () => {
+    const query = engine.buildFindManyQuery(
+      {},
+      {
+        companyId: "123",
+        start: "2024-07-01T00:00:00.000Z",
+        end: "2024-08-31T23:59:59.999Z",
+        changes: [
+          { model: "model", operation: "create" },
+          { model: "model", operation: "update", meta: { eye: "ball" } },
+        ],
+      }
+    );
+
+    expect(query).toEqual([
+      {
+        term: {
+          companyId: "123",
+        },
+      },
+      {
+        range: {
+          timestamp: {
+            gte: "2024-07-01T00:00:00.000Z",
+            lt: "2024-08-31T23:59:59.999Z",
+          },
+        },
+      },
+      {
+        nested: {
+          path: "changes",
+          query: {
+            bool: {
+              should: [
+                {
+                  bool: {
+                    must: [
+                      {
+                        term: {
+                          "changes.model": "model",
+                        },
+                      },
+                      {
+                        term: {
+                          "changes.operation": "create",
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  bool: {
+                    must: [
+                      {
+                        term: {
+                          "changes.model": "model",
+                        },
+                      },
+                      {
+                        term: {
+                          "changes.operation": "update",
+                        },
+                      },
+                      {
+                        nested: {
+                          path: "changes.meta",
+                          query: {
+                            bool: {
+                              must: [
+                                {
+                                  term: {
+                                    "changes.meta.key": "eye",
+                                  },
+                                },
+                                {
+                                  term: {
+                                    "changes.meta.value.keyword": "ball",
+                                  },
+                                },
+                              ],
+                            },
+                          },
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        },
+      },
+    ]);
+  });
+
   it("should correctly create a query with meta filter", async () => {
     const query = engine.buildFindManyQuery(
       {},

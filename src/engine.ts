@@ -1256,6 +1256,92 @@ class OpenSearchEngine extends Engine<OpenSearchAction> {
       }
     }
 
+    if (filters.changes) {
+      const changes = Array.isArray(filters.changes)
+        ? filters.changes
+        : [filters.changes];
+
+      const changesShould: any = [];
+
+      // OR all the change queries together
+      changes.forEach((change) => {
+        const changeMust: any = [];
+        ["model", "operation", "id", "path", "before", "after"].forEach(
+          (key) => {
+            if (change?.[key as keyof typeof change]) {
+              changeMust.push({
+                term: {
+                  [`changes.${
+                    ["path", "before", "after"].includes(
+                      key as keyof typeof change
+                    )
+                      ? `${key}.keyword`
+                      : key
+                  }`]: change?.[key as keyof typeof change],
+                },
+              });
+            }
+          }
+        );
+
+        if (change.meta && Object.keys(change.meta).length) {
+          const changeMetaMust: any = [];
+          Object.keys(change.meta).forEach((key) => {
+            changeMetaMust.push({
+              term: {
+                "changes.meta.key": key,
+              },
+            });
+            changeMetaMust.push({
+              term: {
+                "changes.meta.value.keyword":
+                  change.meta?.[key as keyof typeof change.meta],
+              },
+            });
+          });
+          if (changeMetaMust.length) {
+            changeMust.push({
+              nested: {
+                path: "changes.meta",
+                query:
+                  changeMetaMust.length === 1
+                    ? changeMetaMust[0]
+                    : {
+                        bool: { must: changeMetaMust },
+                      },
+              },
+            });
+          }
+        }
+
+        if (changeMust.length === 1) {
+          changesShould.push(changeMust[0]);
+        } else if (changeMust.length) {
+          changesShould.push({
+            bool: {
+              must: changeMust,
+            },
+          });
+        }
+      });
+
+      if (changesShould.length) {
+        must.push({
+          nested: {
+            path: "changes",
+            query:
+              changesShould.length === 1
+                ? changesShould[0]
+                : {
+                    bool: {
+                      should: changesShould,
+                    },
+                  },
+          },
+        });
+      }
+    }
+
     if (filters.meta) {
       const metas = Array.isArray(filters.meta) ? filters.meta : [filters.meta];
 

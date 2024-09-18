@@ -407,6 +407,57 @@ describe("OpenSearchEngine.findMany", () => {
     });
   });
 
+  it("should perform query with changes", async () => {
+    const results = await engine.findMany(
+      {},
+      {
+        companyId: "company123",
+        changes: { model: "model", operation: "update" },
+      }
+    );
+
+    expect(results[0]).toEqual({
+      id: results[0]?.id,
+      timestamp: results[0]?.timestamp,
+      ...OPENSEARCH_ACTION_TEMPLATE,
+    });
+  });
+
+  it("should perform query with changes and meta", async () => {
+    const results = await engine.findMany(
+      {},
+      {
+        companyId: "company123",
+        changes: { model: "model", operation: "update", meta: { eye: "ball" } },
+      }
+    );
+
+    expect(results[0]).toEqual({
+      id: results[0]?.id,
+      timestamp: results[0]?.timestamp,
+      ...OPENSEARCH_ACTION_TEMPLATE,
+    });
+  });
+
+  it("should perform query with changes array", async () => {
+    const results = await engine.findMany(
+      {},
+      {
+        companyId: "company123",
+        changes: [
+          { model: "model", operation: "create" },
+          { model: "model", operation: "update", meta: { eye: "ball" } },
+        ],
+      }
+    );
+
+    expect(results[0]).toEqual({
+      id: results[0]?.id,
+      timestamp: results[0]?.timestamp,
+      ...OPENSEARCH_ACTION_TEMPLATE,
+    });
+  });
+
   it("should perform query with meta filter", async () => {
     const results = await engine.findMany(
       {},
