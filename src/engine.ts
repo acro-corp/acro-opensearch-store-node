@@ -377,414 +377,7 @@ class OpenSearchEngine extends Engine<OpenSearchAction> {
     filters: FindActionFilters
   ): Promise<OpenSearchAction[]> {
     return new Promise(async (resolve, reject) => {
-      // instantiate companyId and date range filters
-      // (defaulting date range to {now - this._defaultStartMonthsAgo} to now)
-      const must: any = [
-        {
-          term: {
-            companyId: filters.companyId,
-          },
-        },
-        {
-          range: {
-            timestamp: {
-              gte: filters.start
-                ? DateTime.fromISO(filters.start, {
-                    zone: "utc",
-                  }).toISO()
-                : DateTime.fromObject({}, { zone: "utc" })
-                    .minus({ months: this._defaultStartMonthsAgo })
-                    .toISO(),
-              lt: filters.end
-                ? DateTime.fromISO(filters.end, {
-                    zone: "utc",
-                  }).toISO()
-                : DateTime.fromObject({}, { zone: "utc" }).toISO(),
-            },
-          },
-        },
-      ];
-
-      // add other filters
-      ["id", "clientId", "app", "environment", "sessionId", "traceIds"].forEach(
-        (key) => {
-          if (filters[key as keyof typeof filters]) {
-            must.push({
-              terms: {
-                [key]: Array.isArray(filters[key as keyof typeof filters])
-                  ? filters[key as keyof typeof filters]
-                  : [filters[key as keyof typeof filters]],
-              },
-            });
-          }
-        }
-      );
-
-      if (filters.framework) {
-        const frameworkMust: any = [];
-        ["name", "version"].forEach((key) => {
-          if (filters.framework?.[key as keyof typeof filters.framework]) {
-            frameworkMust.push({
-              terms: {
-                [`framework.${key}`]: Array.isArray(
-                  filters.framework?.[key as keyof typeof filters.framework]
-                )
-                  ? filters.framework?.[key as keyof typeof filters.framework]
-                  : [
-                      filters.framework?.[
-                        key as keyof typeof filters.framework
-                      ],
-                    ],
-              },
-            });
-          }
-        });
-        if (frameworkMust.length) {
-          must.push({
-            nested: {
-              path: "framework",
-              query: { bool: { must: frameworkMust } },
-            },
-          });
-        }
-      }
-
-      if (filters.action) {
-        const actionMust: any = [];
-        ["id", "type", "verb", "object"].forEach((key) => {
-          if (filters.action?.[key as keyof typeof filters.action]) {
-            actionMust.push({
-              terms: {
-                [`action.${key}`]: Array.isArray(
-                  filters.action?.[key as keyof typeof filters.action]
-                )
-                  ? filters.action?.[key as keyof typeof filters.action]
-                  : [filters.action?.[key as keyof typeof filters.action]],
-              },
-            });
-          }
-        });
-        if (actionMust.length) {
-          must.push({
-            nested: {
-              path: "action",
-              query: { bool: { must: actionMust } },
-            },
-          });
-        }
-      }
-
-      if (filters.agents) {
-        const agentsMust: any = [];
-        ["id", "type", "name"].forEach((key) => {
-          if (filters.agents?.[key as keyof typeof filters.agents]) {
-            agentsMust.push({
-              terms: {
-                [`agents.${key}`]: Array.isArray(
-                  filters.agents?.[key as keyof typeof filters.agents]
-                )
-                  ? filters.agents?.[key as keyof typeof filters.agents]
-                  : [filters.agents?.[key as keyof typeof filters.agents]],
-              },
-            });
-          }
-        });
-        if (filters.agents.meta) {
-          const agentsMetaMust: any = [];
-          Object.keys(filters.agents.meta).forEach((key) => {
-            agentsMetaMust.push({
-              terms: {
-                [`agents.meta.${key}`]: Array.isArray(
-                  filters.agents?.meta?.[
-                    key as keyof typeof filters.agents.meta
-                  ]
-                )
-                  ? filters.agents?.meta?.[
-                      key as keyof typeof filters.agents.meta
-                    ]
-                  : [
-                      filters.agents?.meta?.[
-                        key as keyof typeof filters.agents.meta
-                      ],
-                    ],
-              },
-            });
-          });
-          if (agentsMetaMust.length) {
-            agentsMust.push({
-              nested: {
-                path: "agents.meta",
-                query: { bool: { must: agentsMetaMust } },
-              },
-            });
-          }
-        }
-        if (agentsMust.length) {
-          must.push({
-            nested: {
-              path: "agents",
-              query: { bool: { must: agentsMust } },
-            },
-          });
-        }
-      }
-
-      if (filters.targets) {
-        const targetsMust: any = [];
-        ["id", "type", "name"].forEach((key) => {
-          if (filters.targets?.[key as keyof typeof filters.targets]) {
-            targetsMust.push({
-              terms: {
-                [`targets.${key}`]: Array.isArray(
-                  filters.targets?.[key as keyof typeof filters.targets]
-                )
-                  ? filters.targets?.[key as keyof typeof filters.targets]
-                  : [filters.targets?.[key as keyof typeof filters.targets]],
-              },
-            });
-          }
-        });
-        if (filters.targets.meta) {
-          const targetsMetaMust: any = [];
-          Object.keys(filters.targets.meta).forEach((key) => {
-            targetsMetaMust.push({
-              terms: {
-                [`targets.meta.${key}`]: Array.isArray(
-                  filters.targets?.meta?.[
-                    key as keyof typeof filters.targets.meta
-                  ]
-                )
-                  ? filters.targets?.meta?.[
-                      key as keyof typeof filters.targets.meta
-                    ]
-                  : [
-                      filters.targets?.meta?.[
-                        key as keyof typeof filters.targets.meta
-                      ],
-                    ],
-              },
-            });
-          });
-          if (targetsMetaMust.length) {
-            targetsMust.push({
-              nested: {
-                path: "targets.meta",
-                query: { bool: { must: targetsMetaMust } },
-              },
-            });
-          }
-        }
-        if (targetsMust.length) {
-          must.push({
-            nested: {
-              path: "targets",
-              query: { bool: { must: targetsMust } },
-            },
-          });
-        }
-      }
-
-      if (filters.request) {
-        const requestMust: any = [];
-        Object.keys(filters.request).forEach((key) => {
-          if (
-            filters.request?.[key] &&
-            typeof filters.request?.[key] === "object"
-          ) {
-            // it's a parent
-            Object.keys(filters.request?.[key]).forEach((innerKey) => {
-              requestMust.push({
-                bool: {
-                  must: [
-                    {
-                      term: { innerKey },
-                    },
-                    {
-                      parent: { key },
-                    },
-                    {
-                      terms: {
-                        value: Array.isArray(
-                          (
-                            filters.request?.[
-                              key as keyof typeof filters.request
-                            ] as any
-                          )?.[innerKey]
-                        )
-                          ? (
-                              filters.request?.[
-                                key as keyof typeof filters.request
-                              ] as any
-                            )?.[innerKey]
-                          : [
-                              (
-                                filters.request?.[
-                                  key as keyof typeof filters.request
-                                ] as any
-                              )?.[innerKey],
-                            ],
-                      },
-                    },
-                  ],
-                },
-              });
-            });
-          } else {
-            requestMust.push({
-              bool: {
-                must: [
-                  {
-                    term: { key },
-                  },
-                  {
-                    terms: {
-                      value: Array.isArray(
-                        filters.request?.[key as keyof typeof filters.request]
-                      )
-                        ? filters.request?.[key as keyof typeof filters.request]
-                        : [
-                            filters.request?.[
-                              key as keyof typeof filters.request
-                            ],
-                          ],
-                    },
-                  },
-                ],
-              },
-            });
-          }
-        });
-        if (requestMust.length) {
-          must.push({
-            nested: {
-              path: "request",
-              query: { bool: { must: requestMust } },
-            },
-          });
-        }
-      }
-
-      if (filters.response) {
-        const responseMust: any = [];
-        if (filters.response.status) {
-          responseMust.push({
-            terms: {
-              "response.status": Array.isArray(filters.response.status)
-                ? filters.response.status
-                : [filters.response.status],
-            },
-          });
-        }
-        if (filters.response.time?.gte || filters.response.time?.lt) {
-          responseMust.push({
-            range: {
-              "response.time": {
-                ...(filters.response.time?.gte
-                  ? {
-                      gte: filters.response.time?.gte,
-                    }
-                  : {}),
-                ...(filters.response.time?.lt
-                  ? {
-                      lt: filters.response.time?.lt,
-                    }
-                  : {}),
-              },
-            },
-          });
-        }
-        if (filters.response.body) {
-          const responseBodyMust: any = [];
-          Object.keys(filters.response.body).forEach((key) => {
-            responseBodyMust.push({
-              terms: {
-                [`response.body.${key}`]: Array.isArray(
-                  filters.response?.body?.[
-                    key as keyof typeof filters.response.body
-                  ]
-                )
-                  ? filters.response?.body?.[
-                      key as keyof typeof filters.response.body
-                    ]
-                  : [
-                      filters.response?.body?.[
-                        key as keyof typeof filters.response.body
-                      ],
-                    ],
-              },
-            });
-          });
-          if (responseBodyMust.length) {
-            responseMust.push({
-              nested: {
-                path: "response.body",
-                query: { bool: { must: responseBodyMust } },
-              },
-            });
-          }
-        }
-        if (filters.response.headers) {
-          const responseHeadersMust: any = [];
-          Object.keys(filters.response.headers).forEach((key) => {
-            responseHeadersMust.push({
-              terms: {
-                [`response.headers.${key}`]: Array.isArray(
-                  filters.response?.headers?.[
-                    key as keyof typeof filters.response.headers
-                  ]
-                )
-                  ? filters.response?.headers?.[
-                      key as keyof typeof filters.response.headers
-                    ]
-                  : [
-                      filters.response?.headers?.[
-                        key as keyof typeof filters.response.headers
-                      ],
-                    ],
-              },
-            });
-          });
-          if (responseHeadersMust.length) {
-            responseMust.push({
-              nested: {
-                path: "response.headers",
-                query: { bool: { must: responseHeadersMust } },
-              },
-            });
-          }
-        }
-        if (responseMust.length) {
-          must.push({
-            nested: {
-              path: "response",
-              query: { bool: { must: responseMust } },
-            },
-          });
-        }
-      }
-
-      if (filters.meta) {
-        const metaMust: any = [];
-        Object.keys(filters.meta).forEach((key) => {
-          metaMust.push({
-            terms: {
-              [`meta.${key}`]: Array.isArray(
-                filters.meta?.[key as keyof typeof filters.meta]
-              )
-                ? filters.meta?.[key as keyof typeof filters.meta]
-                : [filters.meta?.[key as keyof typeof filters.meta]],
-            },
-          });
-        });
-        if (metaMust.length) {
-          must.push({
-            nested: {
-              path: "meta",
-              query: { bool: { must: metaMust } },
-            },
-          });
-        }
-      }
+      const must = this.buildFindManyQuery(options, filters);
 
       const body = {
         query: { bool: { must } },
@@ -1109,6 +702,484 @@ class OpenSearchEngine extends Engine<OpenSearchAction> {
     if (indices?.length) {
       await Promise.all(indices.map((index) => this.updateIndexMapping(index)));
     }
+  }
+
+  /**
+   * Returns an array of OpenSearch queries for a FindMany call
+   * @param options
+   * @param filters
+   * @returns
+   */
+  buildFindManyQuery(
+    options: FindActionOptions,
+    filters: FindActionFilters
+  ): any[] {
+    // instantiate companyId and date range filters
+    // (defaulting date range to {now - this._defaultStartMonthsAgo} to now)
+    const must: any = [
+      {
+        term: {
+          companyId: filters.companyId,
+        },
+      },
+      {
+        range: {
+          timestamp: {
+            gte: filters.start
+              ? DateTime.fromISO(filters.start, {
+                  zone: "utc",
+                }).toISO()
+              : DateTime.fromObject({}, { zone: "utc" })
+                  .minus({ months: this._defaultStartMonthsAgo })
+                  .toISO(),
+            lt: filters.end
+              ? DateTime.fromISO(filters.end, {
+                  zone: "utc",
+                }).toISO()
+              : DateTime.fromObject({}, { zone: "utc" }).toISO(),
+          },
+        },
+      },
+    ];
+
+    // add other filters
+    ["id", "clientId", "app", "environment", "sessionId", "traceIds"].forEach(
+      (key) => {
+        if (filters[key as keyof typeof filters]) {
+          must.push({
+            terms: {
+              [key]: Array.isArray(filters[key as keyof typeof filters])
+                ? filters[key as keyof typeof filters]
+                : [filters[key as keyof typeof filters]],
+            },
+          });
+        }
+      }
+    );
+
+    // Sample framework query:
+    // { framework: [{ name: 'apollo' }, { name: 'express', version: '5.0.0' }] }
+    if (filters.framework) {
+      const frameworks = Array.isArray(filters.framework)
+        ? filters.framework
+        : [filters.framework];
+
+      const frameworkShould: any = [];
+
+      // OR all the framework queries together
+      frameworks.forEach((framework) => {
+        const frameworkMust: any = [];
+        ["name", "version"].forEach((key) => {
+          if (framework?.[key as keyof typeof framework]) {
+            frameworkMust.push({
+              term: {
+                [`framework.${key}`]:
+                  framework?.[key as keyof typeof framework],
+              },
+            });
+          }
+        });
+        if (frameworkMust.length === 1) {
+          frameworkShould.push(frameworkMust[0]);
+        } else if (frameworkMust.length) {
+          frameworkShould.push({
+            bool: {
+              must: frameworkMust,
+            },
+          });
+        }
+      });
+
+      if (frameworkShould.length === 1) {
+        must.push(frameworkShould[0]);
+      } else if (frameworkShould.length) {
+        must.push({
+          bool: {
+            should: frameworkShould,
+          },
+        });
+      }
+    }
+
+    // Sample action query:
+    // {
+    //   action: [
+    //     { type: 'HTTP', verb: 'POST', object: '/v1/transactions' },
+    //     { type: 'GRAPHQL', verb: 'mutation', object: 'CreateTransaction' }
+    //   ]
+    // }
+    if (filters.action) {
+      const actions = Array.isArray(filters.action)
+        ? filters.action
+        : [filters.action];
+
+      const actionShould: any = [];
+
+      // OR all the action queries together
+      actions.forEach((action) => {
+        const actionMust: any = [];
+        ["id", "type", "verb", "object"].forEach((key) => {
+          if (action?.[key as keyof typeof action]) {
+            actionMust.push({
+              term: {
+                [`action.${key}`]: action?.[key as keyof typeof action],
+              },
+            });
+          }
+        });
+        if (actionMust.length === 1) {
+          actionShould.push(actionMust[0]);
+        } else if (actionMust.length) {
+          actionShould.push({
+            bool: {
+              must: actionMust,
+            },
+          });
+        }
+      });
+
+      if (actionShould.length === 1) {
+        must.push(actionShould[0]);
+      } else if (actionShould.length) {
+        must.push({
+          bool: {
+            should: actionShould,
+          },
+        });
+      }
+    }
+
+    // Sample agents query:
+    // {
+    //   agents: [
+    //     { type: 'USER', id: 'user_123' },
+    //     { type: 'USER', meta: { clerkUserId: 'clk_user_456' } }
+    //   ]
+    // }
+    if (filters.agents) {
+      const agents = Array.isArray(filters.agents)
+        ? filters.agents
+        : [filters.agents];
+
+      const agentShould: any = [];
+
+      // OR all the agent queries together
+      agents.forEach((agent) => {
+        const agentMust: any = [];
+        ["id", "type", "name"].forEach((key) => {
+          if (agent?.[key as keyof typeof agent]) {
+            agentMust.push({
+              term: {
+                [`agents.${key}`]: agent?.[key as keyof typeof agent],
+              },
+            });
+          }
+        });
+
+        if (agent.meta && Object.keys(agent.meta).length) {
+          const agentMetaMust: any = [];
+          Object.keys(agent.meta).forEach((key) => {
+            agentMetaMust.push({
+              term: {
+                [`agents.meta.${key}`]:
+                  agent.meta?.[key as keyof typeof agent.meta],
+              },
+            });
+          });
+          agentMetaMust.forEach((v: any) => {
+            agentMust.push(v);
+          });
+        }
+
+        if (agentMust.length === 1) {
+          agentShould.push(agentMust[0]);
+        } else if (agentMust.length) {
+          agentShould.push({
+            bool: {
+              must: agentMust,
+            },
+          });
+        }
+      });
+
+      if (agentShould.length === 1) {
+        must.push(agentShould[0]);
+      } else if (agentShould.length) {
+        must.push({
+          bool: {
+            should: agentShould,
+          },
+        });
+      }
+    }
+
+    // Sample targets query:
+    // {
+    //   targets: [
+    //     { type: 'transaction', id: 'transaction_123' },
+    //     { type: 'user', meta: { clerkUserId: 'clk_user_456' } }
+    //   ]
+    // }
+    if (filters.targets) {
+      const targets = Array.isArray(filters.targets)
+        ? filters.targets
+        : [filters.targets];
+
+      const targetShould: any = [];
+
+      // OR all the target queries together
+      targets.forEach((target) => {
+        const targetMust: any = [];
+        ["id", "type", "name"].forEach((key) => {
+          if (target?.[key as keyof typeof target]) {
+            targetMust.push({
+              term: {
+                [`targets.${key}`]: target?.[key as keyof typeof target],
+              },
+            });
+          }
+        });
+
+        if (target.meta && Object.keys(target.meta).length) {
+          const targetMetaMust: any = [];
+          Object.keys(target.meta).forEach((key) => {
+            targetMetaMust.push({
+              term: {
+                [`targets.meta.${key}`]:
+                  target.meta?.[key as keyof typeof target.meta],
+              },
+            });
+          });
+          targetMetaMust.forEach((v: any) => {
+            targetMust.push(v);
+          });
+        }
+
+        if (targetMust.length === 1) {
+          targetShould.push(targetMust[0]);
+        } else if (targetMust.length) {
+          targetShould.push({
+            bool: {
+              must: targetMust,
+            },
+          });
+        }
+      });
+
+      if (targetShould.length === 1) {
+        must.push(targetShould[0]);
+      } else if (targetShould.length) {
+        must.push({
+          bool: {
+            should: targetShould,
+          },
+        });
+      }
+    }
+
+    // if (filters.request) {
+    //   const requestMust: any = [];
+    //   Object.keys(filters.request).forEach((key) => {
+    //     if (
+    //       filters.request?.[key] &&
+    //       typeof filters.request?.[key] === "object"
+    //     ) {
+    //       // it's a parent
+    //       Object.keys(filters.request?.[key]).forEach((innerKey) => {
+    //         requestMust.push({
+    //           bool: {
+    //             must: [
+    //               {
+    //                 term: { innerKey },
+    //               },
+    //               {
+    //                 parent: { key },
+    //               },
+    //               {
+    //                 terms: {
+    //                   value: Array.isArray(
+    //                     (
+    //                       filters.request?.[
+    //                         key as keyof typeof filters.request
+    //                       ] as any
+    //                     )?.[innerKey]
+    //                   )
+    //                     ? (
+    //                         filters.request?.[
+    //                           key as keyof typeof filters.request
+    //                         ] as any
+    //                       )?.[innerKey]
+    //                     : [
+    //                         (
+    //                           filters.request?.[
+    //                             key as keyof typeof filters.request
+    //                           ] as any
+    //                         )?.[innerKey],
+    //                       ],
+    //                 },
+    //               },
+    //             ],
+    //           },
+    //         });
+    //       });
+    //     } else {
+    //       requestMust.push({
+    //         bool: {
+    //           must: [
+    //             {
+    //               term: { key },
+    //             },
+    //             {
+    //               terms: {
+    //                 value: Array.isArray(
+    //                   filters.request?.[key as keyof typeof filters.request]
+    //                 )
+    //                   ? filters.request?.[key as keyof typeof filters.request]
+    //                   : [
+    //                       filters.request?.[
+    //                         key as keyof typeof filters.request
+    //                       ],
+    //                     ],
+    //               },
+    //             },
+    //           ],
+    //         },
+    //       });
+    //     }
+    //   });
+    //   if (requestMust.length) {
+    //     must.push({
+    //       nested: {
+    //         path: "request",
+    //         query: { bool: { must: requestMust } },
+    //       },
+    //     });
+    //   }
+    // }
+
+    // if (filters.response) {
+    //   const responseMust: any = [];
+    //   if (filters.response.status) {
+    //     responseMust.push({
+    //       terms: {
+    //         "response.status": Array.isArray(filters.response.status)
+    //           ? filters.response.status
+    //           : [filters.response.status],
+    //       },
+    //     });
+    //   }
+    //   if (filters.response.time?.gte || filters.response.time?.lt) {
+    //     responseMust.push({
+    //       range: {
+    //         "response.time": {
+    //           ...(filters.response.time?.gte
+    //             ? {
+    //                 gte: filters.response.time?.gte,
+    //               }
+    //             : {}),
+    //           ...(filters.response.time?.lt
+    //             ? {
+    //                 lt: filters.response.time?.lt,
+    //               }
+    //             : {}),
+    //         },
+    //       },
+    //     });
+    //   }
+    //   if (filters.response.body) {
+    //     const responseBodyMust: any = [];
+    //     Object.keys(filters.response.body).forEach((key) => {
+    //       responseBodyMust.push({
+    //         terms: {
+    //           [`response.body.${key}`]: Array.isArray(
+    //             filters.response?.body?.[
+    //               key as keyof typeof filters.response.body
+    //             ]
+    //           )
+    //             ? filters.response?.body?.[
+    //                 key as keyof typeof filters.response.body
+    //               ]
+    //             : [
+    //                 filters.response?.body?.[
+    //                   key as keyof typeof filters.response.body
+    //                 ],
+    //               ],
+    //         },
+    //       });
+    //     });
+    //     if (responseBodyMust.length) {
+    //       responseMust.push({
+    //         nested: {
+    //           path: "response.body",
+    //           query: { bool: { must: responseBodyMust } },
+    //         },
+    //       });
+    //     }
+    //   }
+    //   if (filters.response.headers) {
+    //     const responseHeadersMust: any = [];
+    //     Object.keys(filters.response.headers).forEach((key) => {
+    //       responseHeadersMust.push({
+    //         terms: {
+    //           [`response.headers.${key}`]: Array.isArray(
+    //             filters.response?.headers?.[
+    //               key as keyof typeof filters.response.headers
+    //             ]
+    //           )
+    //             ? filters.response?.headers?.[
+    //                 key as keyof typeof filters.response.headers
+    //               ]
+    //             : [
+    //                 filters.response?.headers?.[
+    //                   key as keyof typeof filters.response.headers
+    //                 ],
+    //               ],
+    //         },
+    //       });
+    //     });
+    //     if (responseHeadersMust.length) {
+    //       responseMust.push({
+    //         nested: {
+    //           path: "response.headers",
+    //           query: { bool: { must: responseHeadersMust } },
+    //         },
+    //       });
+    //     }
+    //   }
+    //   if (responseMust.length) {
+    //     must.push({
+    //       nested: {
+    //         path: "response",
+    //         query: { bool: { must: responseMust } },
+    //       },
+    //     });
+    //   }
+    // }
+
+    // if (filters.meta) {
+    //   const metaMust: any = [];
+    //   Object.keys(filters.meta).forEach((key) => {
+    //     metaMust.push({
+    //       terms: {
+    //         [`meta.${key}`]: Array.isArray(
+    //           filters.meta?.[key as keyof typeof filters.meta]
+    //         )
+    //           ? filters.meta?.[key as keyof typeof filters.meta]
+    //           : [filters.meta?.[key as keyof typeof filters.meta]],
+    //       },
+    //     });
+    //   });
+    //   if (metaMust.length) {
+    //     must.push({
+    //       nested: {
+    //         path: "meta",
+    //         query: { bool: { must: metaMust } },
+    //       },
+    //     });
+    //   }
+    // }
+
+    return must;
   }
 }
 
