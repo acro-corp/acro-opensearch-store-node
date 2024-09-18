@@ -85,6 +85,192 @@ describe("OpenSearchEngine.buildFindManyQuery", () => {
     ]);
   });
 
+  it("should correctly create a query with query string", async () => {
+    const query = engine.buildFindManyQuery(
+      {},
+      {
+        companyId: "123",
+        start: "2024-07-01T00:00:00.000Z",
+        end: "2024-08-31T23:59:59.999Z",
+        query: "abc123",
+      }
+    );
+
+    expect(query).toEqual([
+      {
+        term: {
+          companyId: "123",
+        },
+      },
+      {
+        range: {
+          timestamp: {
+            gte: "2024-07-01T00:00:00.000Z",
+            lt: "2024-08-31T23:59:59.999Z",
+          },
+        },
+      },
+      {
+        bool: {
+          should: [
+            {
+              term: {
+                id: "abc123",
+              },
+            },
+            {
+              term: {
+                app: "abc123",
+              },
+            },
+            {
+              term: {
+                environment: "abc123",
+              },
+            },
+            {
+              term: {
+                "framework.name": "abc123",
+              },
+            },
+            {
+              term: {
+                sessionId: "abc123",
+              },
+            },
+            {
+              term: {
+                traceIds: "abc123",
+              },
+            },
+            {
+              term: {
+                "action.id": "abc123",
+              },
+            },
+            {
+              term: {
+                "action.object.keyword": "abc123",
+              },
+            },
+            {
+              nested: {
+                path: "agents",
+                query: {
+                  bool: {
+                    should: [
+                      {
+                        term: {
+                          "agents.id": "abc123",
+                        },
+                      },
+                      {
+                        nested: {
+                          path: "agents.meta",
+                          query: {
+                            term: {
+                              "agents.meta.value.keyword": "abc123",
+                            },
+                          },
+                        },
+                      },
+                    ],
+                  },
+                },
+              },
+            },
+            {
+              nested: {
+                path: "targets",
+                query: {
+                  bool: {
+                    should: [
+                      {
+                        term: {
+                          "targets.id": "abc123",
+                        },
+                      },
+                      {
+                        nested: {
+                          path: "targets.meta",
+                          query: {
+                            term: {
+                              "targets.meta.value.keyword": "abc123",
+                            },
+                          },
+                        },
+                      },
+                    ],
+                  },
+                },
+              },
+            },
+            {
+              nested: {
+                path: "request",
+                query: {
+                  term: {
+                    "request.value.keyword": "abc123",
+                  },
+                },
+              },
+            },
+            {
+              nested: {
+                path: "response.body",
+                query: {
+                  term: {
+                    "response.body.value.keyword": "abc123",
+                  },
+                },
+              },
+            },
+            {
+              nested: {
+                path: "response.headers",
+                query: {
+                  term: {
+                    "response.headers.value.keyword": "abc123",
+                  },
+                },
+              },
+            },
+            {
+              nested: {
+                path: "changes",
+                query: {
+                  term: {
+                    "changes.id": "abc123",
+                  },
+                },
+              },
+            },
+            {
+              nested: {
+                path: "changes",
+                query: {
+                  term: {
+                    "changes.path.keyword": "abc123",
+                  },
+                },
+              },
+            },
+            {
+              nested: {
+                path: "meta",
+                query: {
+                  term: {
+                    "meta.value.keyword": "abc123",
+                  },
+                },
+              },
+            },
+          ],
+        },
+      },
+    ]);
+  });
+
   it("should correctly create a query with id, clientId, app, environment, sessionId, traceIds", async () => {
     const query = engine.buildFindManyQuery(
       {},
@@ -1117,7 +1303,7 @@ describe("OpenSearchEngine.buildFindManyQuery", () => {
     ]);
   });
 
-  it("should correctly create a query with of specific keys in request", async () => {
+  it("should correctly create a query with specific keys in request", async () => {
     const query = engine.buildFindManyQuery(
       {},
       {
@@ -1206,7 +1392,7 @@ describe("OpenSearchEngine.buildFindManyQuery", () => {
     ]);
   });
 
-  it("should correctly create a query with of generic keys in request", async () => {
+  it("should correctly create a query with generic keys in request", async () => {
     const query = engine.buildFindManyQuery(
       {},
       {
@@ -1441,7 +1627,7 @@ describe("OpenSearchEngine.buildFindManyQuery", () => {
     ]);
   });
 
-  it("should correctly create a query with of response body filters", async () => {
+  it("should correctly create a query with response body filters", async () => {
     const query = engine.buildFindManyQuery(
       {},
       {
@@ -1870,7 +2056,7 @@ describe("OpenSearchEngine.buildFindManyQuery", () => {
     ]);
   });
 
-  it("should correctly create a query with array of meta filters", async () => {
+  it("should correctly create a query with meta filters", async () => {
     const query = engine.buildFindManyQuery(
       {},
       {
@@ -1946,7 +2132,7 @@ describe("OpenSearchEngine.buildFindManyQuery", () => {
     ]);
   });
 
-  it("should correctly create a query with array of multiple meta filters", async () => {
+  it("should correctly create a query with multiple meta filters", async () => {
     const query = engine.buildFindManyQuery(
       {},
       {
