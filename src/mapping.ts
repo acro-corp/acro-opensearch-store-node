@@ -73,6 +73,7 @@ export const INDEX_MAPPING = {
     },
   },
   agents: {
+    type: "nested",
     properties: {
       id: {
         type: "keyword",
@@ -89,6 +90,7 @@ export const INDEX_MAPPING = {
         },
       },
       meta: {
+        type: "nested",
         properties: {
           key: {
             type: "keyword",
@@ -106,6 +108,7 @@ export const INDEX_MAPPING = {
     },
   },
   targets: {
+    type: "nested",
     properties: {
       id: {
         type: "keyword",
@@ -122,6 +125,7 @@ export const INDEX_MAPPING = {
         },
       },
       meta: {
+        type: "nested",
         properties: {
           key: {
             type: "keyword",
@@ -139,6 +143,7 @@ export const INDEX_MAPPING = {
     },
   },
   request: {
+    type: "nested",
     properties: {
       key: {
         type: "keyword",
@@ -165,6 +170,7 @@ export const INDEX_MAPPING = {
         type: "float",
       },
       body: {
+        type: "nested",
         properties: {
           key: {
             type: "keyword",
@@ -180,6 +186,7 @@ export const INDEX_MAPPING = {
         },
       },
       headers: {
+        type: "nested",
         properties: {
           key: {
             type: "keyword",
@@ -197,6 +204,7 @@ export const INDEX_MAPPING = {
     },
   },
   changes: {
+    type: "nested",
     properties: {
       model: {
         type: "keyword",
@@ -232,6 +240,7 @@ export const INDEX_MAPPING = {
         },
       },
       meta: {
+        type: "nested",
         properties: {
           key: {
             type: "keyword",
@@ -257,6 +266,7 @@ export const INDEX_MAPPING = {
         type: "keyword",
       },
       components: {
+        type: "nested",
         properties: {
           type: {
             type: "keyword",
@@ -270,6 +280,7 @@ export const INDEX_MAPPING = {
         },
       },
       meta: {
+        type: "nested",
         properties: {
           key: {
             type: "keyword",
@@ -287,6 +298,7 @@ export const INDEX_MAPPING = {
     },
   },
   meta: {
+    type: "nested",
     properties: {
       key: {
         type: "keyword",
