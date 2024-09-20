@@ -131,7 +131,7 @@ class OpenSearchEngine extends Engine<OpenSearchAction> {
                 value:
                   typeof nestedValue === "string"
                     ? nestedValue
-                    : JSON.stringify(breakCircularReferences(value)),
+                    : JSON.stringify(breakCircularReferences(nestedValue)),
               }));
             } else {
               return [
@@ -218,7 +218,13 @@ class OpenSearchEngine extends Engine<OpenSearchAction> {
         if (!obj[item.parent]) {
           obj[item.parent] = {};
         }
-        (obj[item.parent] as Record<string, any>)[item.key] = item.value;
+        let value = item.value;
+        try {
+          value = JSON.parse(value);
+        } catch {
+          value = item.value;
+        }
+        (obj[item.parent] as Record<string, any>)[item.key] = value;
       }
       return obj;
     }, {});

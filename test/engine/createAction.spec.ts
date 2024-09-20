@@ -40,8 +40,6 @@ describe("OpenSearchEngine.createAction", () => {
   });
 
   it("should correctly serialize, create, and deserialize an action", async () => {
-    const timestamp = new Date().toISOString();
-
     const action: Action = {
       timestamp: new Date().toISOString(),
       ...ACTION_TEMPLATE,

@@ -57,7 +57,7 @@ const ACTION_TEMPLATE = {
   request: {
     url: "/api/submit",
     method: "POST",
-    body: { data: "test", transactionId: "transaction_123" },
+    body: { data: { mock: true }, test: undefined, number: 2222, array: [], transactionId: "transaction_123", },
     params: { storeId: "store_123", transactionId: "transaction_123" },
   },
   response: {
@@ -121,7 +121,9 @@ const OPENSEARCH_ACTION_TEMPLATE = {
   request: [
     { key: "url", value: "/api/submit" },
     { key: "method", value: "POST" },
-    { key: "data", parent: "body", value: "test" },
+    { key: "data", parent: "body", value: JSON.stringify({ mock: true }) },
+    { key: "number", parent: "body", value: "2222" },
+    { key: "array", parent: "body", value: "[]" },
     { key: "transactionId", parent: "body", value: "transaction_123" },
     { key: "storeId", parent: "params", value: "store_123" },
     { key: "transactionId", parent: "params", value: "transaction_123" },
